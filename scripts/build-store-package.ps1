@@ -51,11 +51,18 @@ Write-Host ""
 #   AppxBundle=Always                    -> always produce a bundle, even for
 #                                           a single arch (Store requires it)
 #   AppxBundlePlatforms                  -> which arches go in the bundle
-#   AppxPackageSigningEnabled=false      -> do not try to sign locally; the
-#                                           Store will re-sign on submission
-#   GenerateAppxPackageOnBuild=true      -> emit the .msix at build time
+#   AppxPackageSigningEnabled=false     -> do not try to sign locally; the
+#                                          Store will re-sign on submission
+#   GenerateAppxPackageOnBuild=true     -> emit the .msix at build time
+#
+# We use /t:Rebuild rather than /t:Build because the AppX packaging targets
+# have a known issue where they reuse cached per-arch .msix files from
+# Clocks\<arch>\Release\Clocks\Upload\ if they exist, even when the source
+# Package.appxmanifest has changed. That cache made the first Store upload
+# fail with stale PublisherDisplayName values. Rebuild deletes the cache
+# every run, which is slow but correct.
 & $MSBuildPath $project `
-    /t:Build `
+    /t:Rebuild `
     /p:Configuration=Release `
     /p:Platform=x64 `
     /p:AppxBundlePlatforms="$bundlePlatforms" `
