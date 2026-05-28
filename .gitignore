@@ -2,6 +2,13 @@
 x64/
 Debug/
 Release/
+ARM64/
 *.user
 Generated Files/
 packages/
+AppPackages/
+BundleArtifacts/
+*.msix
+*.msixbundle
+*.msixupload
+*.appxsym
