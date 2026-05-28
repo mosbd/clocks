@@ -11,6 +11,10 @@ Design goals
   gradient, rounded-square corners tuned per size (smaller icons need
   proportionally larger radii to read as Fluent tiles).
 * **Pure white glyph** on the plated tile so contrast holds at every size.
+* **Supersampled anti-aliasing**. PIL's primitives are aliased by default,
+  so every asset is composed at SUPERSAMPLE×target resolution and then
+  downscaled with LANCZOS. This makes diagonal hands, the circle outline
+  and the squircle corners smooth even at 16 px / 24 px taskbar sizes.
 * **Asset coverage**. We emit every scale (100/125/150/200/400) and target
   size (16/24/32/48/256) variant Windows looks up via MRT, plus
   ``altform-unplated`` (white glyph on transparent for dark surfaces) and
@@ -29,6 +33,11 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter
 
 ASSETS = Path(__file__).resolve().parent
+
+# Render everything at SUPERSAMPLE× the target resolution and then downscale
+# with LANCZOS. 4× is the sweet spot — it produces smooth edges at 16/24/32 px
+# without blowing memory on the 256/600 px tiles.
+SUPERSAMPLE = 4
 
 # ---------------------------------------------------------------------------
 # Palette
@@ -103,24 +112,36 @@ def _glyph_margin_frac(side: int) -> float:
 # Clock glyph
 # ---------------------------------------------------------------------------
 def _draw_clock_glyph(canvas: Image.Image, cx: float, cy: float, r: float,
-                      color, *, side: int):
+                      color, *, target_side: int):
     """Draw a minimalist clock face (outer ring, hands, cap).
 
+    ``target_side`` is the *final* output size in pixels — used purely to
+    pick the detail level. The actual geometry uses ``r`` (which may be in
+    supersampled pixels), so stroke widths scale automatically with the
+    canvas the caller supplied.
+
     Detail is scaled to the output size:
-      * very small (<=32): no ticks at all — would just become noise
-      * medium (33..96): 4 ticks at the cardinal positions
-      * large (>=97): subtle minor tick marks plus an accent on the
-        second hand
+      * very small (<=24): no outer ring — it would just fight the squircle
+      * medium (33..96): a single outer ring + 4 cardinal ticks
+      * large (>=97): + a full 12-tick clock face + amber second-hand accent
     """
     draw = ImageDraw.Draw(canvas, "RGBA")
 
     # Choose stroke weights as a fraction of radius so they scale evenly.
-    # At very small sizes we drop the outer ring entirely — it competes with
-    # the rounded-square tile silhouette and crowds the hands. The hands +
-    # cap alone read as a clock at 16 px.
-    draw_ring = side > 24
-    ring_w = max(1, int(round(r * (0.085 if side <= 64 else 0.075))))
-    if side <= 48:
+    # At very small target sizes we drop the outer ring entirely — it
+    # competes with the rounded-square tile silhouette and crowds the
+    # hands. The hands + cap alone read as a clock at 16 px.
+    #
+    # Stroke widths are deliberately *fatter* at very small target sizes:
+    # after supersampling + LANCZOS downsample, anything thinner than
+    # ~2 target pixels turns into a faint alpha gradient and disappears.
+    # The cap is also shrunk at tiny sizes so it doesn't outweigh the hands.
+    draw_ring = target_side > 24
+    ring_w = max(1, int(round(r * (0.085 if target_side <= 64 else 0.075))))
+    if target_side <= 24:
+        hour_w = max(2, int(round(r * 0.30)))
+        min_w = max(2, int(round(r * 0.22)))
+    elif target_side <= 48:
         hour_w = max(2, int(round(r * 0.22)))
         min_w = max(2, int(round(r * 0.16)))
     else:
@@ -134,14 +155,14 @@ def _draw_clock_glyph(canvas: Image.Image, cx: float, cy: float, r: float,
         )
 
     # Ticks (skipped on very small sizes so the silhouette stays clean)
-    if side > 32:
-        major_count = 12 if side >= 96 else 4
+    if target_side > 32:
+        major_count = 12 if target_side >= 96 else 4
         for i in range(major_count):
             step_deg = 360 / major_count
             ang = math.radians(i * step_deg - 90)
             outer = r * 0.86
-            inner = r * (0.72 if side >= 96 else 0.74)
-            tick_w = max(1, int(round(r * (0.07 if side >= 96 else 0.10))))
+            inner = r * (0.72 if target_side >= 96 else 0.74)
+            tick_w = max(1, int(round(r * (0.07 if target_side >= 96 else 0.10))))
             x1 = cx + math.cos(ang) * inner
             y1 = cy + math.sin(ang) * inner
             x2 = cx + math.cos(ang) * outer
@@ -155,19 +176,33 @@ def _draw_clock_glyph(canvas: Image.Image, cx: float, cy: float, r: float,
         draw.line((cx, cy, x, y), fill=hand_color, width=width)
 
     # Classic 10:10 — friendly silhouette, makes the cap visible.
-    _hand(300, 0.52, hour_w, color)   # hour hand pointing to "10"
-    _hand(60, 0.72, min_w, color)     # minute hand pointing to "2"
+    # At very small target sizes we extend the hands closer to the edge so
+    # they survive the downsample and aren't dwarfed by the cap dot.
+    if target_side <= 24:
+        hour_len, min_len = 0.68, 0.88
+    elif target_side <= 48:
+        hour_len, min_len = 0.58, 0.78
+    else:
+        hour_len, min_len = 0.52, 0.72
+    _hand(300, hour_len, hour_w, color)   # hour hand pointing to "10"
+    _hand(60, min_len, min_w, color)      # minute hand pointing to "2"
 
     # Accent second hand (only on big tiles where it stays legible)
-    if side >= 128:
+    if target_side >= 128:
         sec_w = max(1, int(round(r * 0.035)))
         _hand(120, 0.78, sec_w, ACCENT)
 
-    # Center cap — kept smaller at tiny sizes so it doesn't swallow the
+    # Center cap — kept small at tiny sizes so it doesn't outweigh the
     # hands; larger sizes get a subtle accent dot inside.
-    cap = max(2, int(round(r * (0.18 if side <= 24 else 0.10))))
+    if target_side <= 24:
+        cap_frac = 0.12
+    elif target_side <= 48:
+        cap_frac = 0.13
+    else:
+        cap_frac = 0.10
+    cap = max(2, int(round(r * cap_frac)))
     draw.ellipse((cx - cap, cy - cap, cx + cap, cy + cap), fill=color)
-    if side >= 96:
+    if target_side >= 96:
         inner = max(1, int(round(r * 0.035)))
         draw.ellipse(
             (cx - inner, cy - inner, cx + inner, cy + inner), fill=ACCENT
@@ -178,66 +213,90 @@ def _draw_clock_glyph(canvas: Image.Image, cx: float, cy: float, r: float,
 # Compositions
 # ---------------------------------------------------------------------------
 def make_plated_tile(size_px: int) -> Image.Image:
-    """Squircle tile with the gradient background and the white clock glyph."""
-    size = (size_px, size_px)
+    """Squircle tile with the gradient background and the white clock glyph.
+
+    Rendered at SUPERSAMPLE×size_px then LANCZOS-downscaled, so circle
+    outlines, diagonal hands and squircle corners are smooth at every
+    target size — most importantly the 16/24/32 px taskbar variants.
+    """
+    target = size_px
+    ss = SUPERSAMPLE
+    big = size_px * ss
+    size = (big, big)
+
     bg = _vertical_gradient(size, TILE_TOP, TILE_BOTTOM).convert("RGBA")
 
-    radius = int(round(size_px * _corner_radius_frac(size_px)))
+    radius = int(round(big * _corner_radius_frac(target)))
     mask = _rounded_mask(size, radius)
 
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
     canvas.paste(bg, (0, 0), mask)
 
-    margin = int(round(size_px * _glyph_margin_frac(size_px)))
-    cx = cy = size_px / 2
-    r = (size_px - 2 * margin) / 2
-    _draw_clock_glyph(canvas, cx, cy, r, GLYPH_LIGHT, side=size_px)
+    margin = int(round(big * _glyph_margin_frac(target)))
+    cx = cy = big / 2
+    r = (big - 2 * margin) / 2
+    _draw_clock_glyph(canvas, cx, cy, r, GLYPH_LIGHT, target_side=target)
 
     # A tiny inner highlight on larger tiles to give the squircle a hint of
     # depth without resorting to a heavy sheen.
-    if size_px >= 96:
+    if target >= 96:
         highlight = Image.new("RGBA", size, (0, 0, 0, 0))
         hd = ImageDraw.Draw(highlight)
         hd.rounded_rectangle(
-            (1, 1, size_px - 1, size_px - 1),
+            (1, 1, big - 1, big - 1),
             radius=radius - 1,
             outline=(255, 255, 255, 38),
-            width=max(1, size_px // 256),
+            width=max(1, big // 256),
         )
         canvas.alpha_composite(highlight)
 
-    return canvas
+    return canvas.resize((target, target), Image.LANCZOS)
 
 
 def make_unplated_glyph(size_px: int, color) -> Image.Image:
     """Just the clock glyph on transparent — used by Windows surfaces that
-    apply their own background plate (taskbar/Start in some themes)."""
-    size = (size_px, size_px)
+    apply their own background plate (taskbar/Start in some themes).
+
+    Also supersampled + LANCZOS-downscaled.
+    """
+    target = size_px
+    ss = SUPERSAMPLE
+    big = size_px * ss
+    size = (big, big)
+
     canvas = Image.new("RGBA", size, (0, 0, 0, 0))
     # Unplated glyphs get a bit more margin so they don't crowd the system plate
-    margin = max(1, int(round(size_px * 0.08)))
-    cx = cy = size_px / 2
-    r = (size_px - 2 * margin) / 2
-    _draw_clock_glyph(canvas, cx, cy, r, color, side=size_px)
-    return canvas
+    margin = max(1, int(round(big * 0.08)))
+    cx = cy = big / 2
+    r = (big - 2 * margin) / 2
+    _draw_clock_glyph(canvas, cx, cy, r, color, target_side=target)
+    return canvas.resize((target, target), Image.LANCZOS)
 
 
 def make_wide_tile(size: tuple[int, int]) -> Image.Image:
-    """Wide tile: gradient background, clock on the left, wordmark on the right."""
-    w, h = size
-    bg = _vertical_gradient(size, TILE_TOP, TILE_BOTTOM).convert("RGBA")
+    """Wide tile: gradient background, clock on the left, wordmark on the right.
 
-    radius = int(round(min(w, h) * _corner_radius_frac(min(w, h))))
-    mask = _rounded_mask(size, radius)
+    Supersampled + downscaled; the wordmark is drawn at the larger font
+    size and lets LANCZOS hand back the crisp final glyphs.
+    """
+    target_w, target_h = size
+    ss = SUPERSAMPLE
+    w, h = target_w * ss, target_h * ss
+    big_size = (w, h)
 
-    canvas = Image.new("RGBA", size, (0, 0, 0, 0))
+    bg = _vertical_gradient(big_size, TILE_TOP, TILE_BOTTOM).convert("RGBA")
+
+    radius = int(round(min(w, h) * _corner_radius_frac(min(target_w, target_h))))
+    mask = _rounded_mask(big_size, radius)
+
+    canvas = Image.new("RGBA", big_size, (0, 0, 0, 0))
     canvas.paste(bg, (0, 0), mask)
 
     margin = int(round(h * 0.16))
     cx = h / 2 + h * 0.04
     cy = h / 2
     r = (h - 2 * margin) / 2
-    _draw_clock_glyph(canvas, cx, cy, r, GLYPH_LIGHT, side=h)
+    _draw_clock_glyph(canvas, cx, cy, r, GLYPH_LIGHT, target_side=target_h)
 
     try:
         from PIL import ImageFont
@@ -260,19 +319,24 @@ def make_wide_tile(size: tuple[int, int]) -> Image.Image:
     except Exception:
         pass
 
-    return canvas
+    return canvas.resize((target_w, target_h), Image.LANCZOS)
 
 
 def make_splash(size: tuple[int, int]) -> Image.Image:
     """Splash screen — gradient bg, large centered clock, wordmark below."""
-    w, h = size
-    bg = _vertical_gradient(size, TILE_TOP, TILE_BOTTOM).convert("RGBA")
+    target_w, target_h = size
+    ss = SUPERSAMPLE
+    w, h = target_w * ss, target_h * ss
+    big_size = (w, h)
+
+    bg = _vertical_gradient(big_size, TILE_TOP, TILE_BOTTOM).convert("RGBA")
     canvas = bg
 
     r = min(w, h) * 0.22
     cx = w / 2
     cy = h / 2 - h * 0.04
-    _draw_clock_glyph(canvas, cx, cy, r, GLYPH_LIGHT, side=int(min(w, h)))
+    _draw_clock_glyph(canvas, cx, cy, r, GLYPH_LIGHT,
+                      target_side=int(min(target_w, target_h)))
 
     try:
         from PIL import ImageFont
@@ -294,7 +358,7 @@ def make_splash(size: tuple[int, int]) -> Image.Image:
     except Exception:
         pass
 
-    return canvas
+    return canvas.resize((target_w, target_h), Image.LANCZOS)
 
 
 # ---------------------------------------------------------------------------
