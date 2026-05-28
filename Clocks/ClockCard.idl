@@ -1,0 +1,20 @@
+namespace Clocks
+{
+    [default_interface]
+    runtimeclass ClockCard : Microsoft.UI.Xaml.Controls.UserControl
+    {
+        ClockCard();
+        void Initialize(String timezoneId, String cityName);
+        void UpdateTime();
+        void SetAnalogStyle(Int32 style);
+        void SetDigitalStyle(Int32 style);
+        void ToggleDisplayMode();
+        String TimezoneId{ get; };
+        String CityName{ get; };
+        Int32 DisplayMode{ get; };
+        Int32 AnalogStyle{ get; };
+        Int32 DigitalStyle{ get; };
+        event Windows.Foundation.EventHandler<String> RemoveRequested;
+        event Windows.Foundation.EventHandler<String> StyleChanged;
+    }
+}

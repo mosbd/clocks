@@ -8,10 +8,42 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Padding="24">
-        <TextBlock Text="World Clocks"
-                   Style="{StaticResource TitleTextBlockStyle}"
-                   VerticalAlignment="Center"
-                   HorizontalAlignment="Center" />
+    <Grid Padding="24" RowDefinitions="Auto,*">
+        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+            <TextBlock x:Name="TitleText" Text="World Clocks"
+                       Style="{StaticResource TitleTextBlockStyle}"
+                       VerticalAlignment="Center"/>
+            <Button x:Name="AddClockButton" Grid.Column="1" Style="{StaticResource AccentButtonStyle}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <SymbolIcon Symbol="Add"/>
+                    <TextBlock Text="Add Clock"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" x:Name="ClockScrollViewer">
+            <ItemsRepeater x:Name="ClockGrid">
+                <ItemsRepeater.Layout>
+                    <UniformGridLayout MinItemWidth="250" MinItemHeight="310"
+                                       MinColumnSpacing="16" MinRowSpacing="16"
+                                       ItemsStretch="None"/>
+                </ItemsRepeater.Layout>
+            </ItemsRepeater>
+        </ScrollViewer>
+
+        <StackPanel x:Name="EmptyState" Grid.Row="1" Visibility="Collapsed"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
+            <FontIcon Glyph="&#xE121;" FontSize="48"
+                      Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                      HorizontalAlignment="Center"/>
+            <TextBlock Text="No clocks added yet"
+                       Style="{StaticResource SubtitleTextBlockStyle}"
+                       HorizontalAlignment="Center"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+            <TextBlock Text="Click 'Add Clock' to get started"
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       HorizontalAlignment="Center"
+                       Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+        </StackPanel>
     </Grid>
 </Page>

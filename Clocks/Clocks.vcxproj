@@ -142,6 +142,9 @@
     <ClInclude Include="MeetingPlannerPage.xaml.h">
       <DependentUpon>MeetingPlannerPage.xaml</DependentUpon>
     </ClInclude>
+    <ClInclude Include="ClockCard.xaml.h">
+      <DependentUpon>ClockCard.xaml</DependentUpon>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml" />
@@ -149,6 +152,7 @@
     <Page Include="ClocksPage.xaml" />
     <Page Include="TimeDiffPage.xaml" />
     <Page Include="MeetingPlannerPage.xaml" />
+    <Page Include="ClockCard.xaml" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -172,6 +176,9 @@
     <ClCompile Include="MeetingPlannerPage.xaml.cpp">
       <DependentUpon>MeetingPlannerPage.xaml</DependentUpon>
     </ClCompile>
+    <ClCompile Include="ClockCard.xaml.cpp">
+      <DependentUpon>ClockCard.xaml</DependentUpon>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="MainWindow.idl">
@@ -189,6 +196,10 @@
     <Midl Include="MeetingPlannerPage.idl">
       <SubType>Code</SubType>
       <DependentUpon>MeetingPlannerPage.xaml</DependentUpon>
+    </Midl>
+    <Midl Include="ClockCard.idl">
+      <SubType>Code</SubType>
+      <DependentUpon>ClockCard.xaml</DependentUpon>
     </Midl>
   </ItemGroup>
   <ItemGroup>

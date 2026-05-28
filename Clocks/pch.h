@@ -29,7 +29,12 @@
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Globalization.h>
 
+#include <winrt/Windows.UI.h>
+#include <winrt/Windows.UI.Text.h>
+
 #include <chrono>
+#include <cmath>
+#include <cstdlib>
 #include <vector>
 #include <string>
 #include <unordered_map>

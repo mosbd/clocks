@@ -4,5 +4,6 @@ namespace Clocks
     runtimeclass ClocksPage : Microsoft.UI.Xaml.Controls.Page
     {
         ClocksPage();
+        void ReloadClocks();
     }
 }

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="Clocks.ClockCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Viewbox Stretch="Uniform" StretchDirection="Both">
+        <Border x:Name="CardBorder" CornerRadius="8" BorderThickness="1"
+                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                Background="Transparent"
+                Padding="16" Width="250" Height="310">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <!-- Row 0: City name + options -->
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock x:Name="CityNameText"
+                           Style="{StaticResource SubtitleTextBlockStyle}"
+                           TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Center"/>
+                <Button x:Name="OptionsButton" Grid.Column="1" Padding="4"
+                        Background="Transparent" BorderThickness="0">
+                    <FontIcon Glyph="&#xE712;" FontSize="16"/>
+                    <Button.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem x:Name="ToggleModeItem" Text="Switch to Digital" Click="ToggleMode_Click"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="Classic" Tag="analog0" Click="StyleChange_Click"/>
+                            <MenuFlyoutItem Text="Modern" Tag="analog1" Click="StyleChange_Click"/>
+                            <MenuFlyoutItem Text="Minimal" Tag="analog2" Click="StyleChange_Click"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="LED" Tag="digital0" Click="StyleChange_Click"/>
+                            <MenuFlyoutItem Text="Clean" Tag="digital1" Click="StyleChange_Click"/>
+                            <MenuFlyoutItem Text="Retro" Tag="digital2" Click="StyleChange_Click"/>
+                            <MenuFlyoutSeparator/>
+                            <MenuFlyoutItem Text="Remove" Click="Remove_Click">
+                                <MenuFlyoutItem.Icon>
+                                    <SymbolIcon Symbol="Delete"/>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </Button.Flyout>
+                </Button>
+            </Grid>
+
+            <!-- Row 1: Analog clock face (built in code-behind) -->
+            <Grid x:Name="AnalogContainer" Grid.Row="1"
+                  HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Canvas x:Name="ClockCanvas" Width="170" Height="170"/>
+            </Grid>
+
+            <!-- Row 1: Digital time (hidden by default) -->
+            <Grid x:Name="DigitalContainer" Grid.Row="1" Visibility="Collapsed"
+                  HorizontalAlignment="Stretch" VerticalAlignment="Center">
+                <Viewbox Stretch="Uniform" StretchDirection="DownOnly"
+                         HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock x:Name="DigitalTimeText" FontSize="40"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="NoWrap"
+                                   TextTrimming="None"/>
+                        <TextBlock x:Name="DigitalSecondsText" FontSize="18"
+                                   HorizontalAlignment="Center"
+                                   TextWrapping="NoWrap"
+                                   TextTrimming="None"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                </Viewbox>
+            </Grid>
+
+            <!-- Row 2: Date + offset info -->
+            <StackPanel Grid.Row="2" Spacing="2">
+                <TextBlock x:Name="DateText"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock x:Name="OffsetText"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                    <TextBlock x:Name="DiffText" Grid.Column="1"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                </Grid>
+            </StackPanel>
+        </Grid>
+            </Border>
+        </Viewbox>
+    </UserControl>

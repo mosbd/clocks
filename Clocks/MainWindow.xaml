@@ -9,16 +9,41 @@
     mc:Ignorable="d"
     Title="Clocks">
 
+    <Window.SystemBackdrop>
+        <MicaBackdrop/>
+    </Window.SystemBackdrop>
+
     <Grid>
-        <NavigationView
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Custom themed title bar -->
+        <Grid x:Name="AppTitleBar" Height="32" Background="Transparent">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock x:Name="AppTitleTextBlock"
+                       Grid.Column="0"
+                       Text="Clocks"
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       VerticalAlignment="Center"
+                       Margin="16,0,0,0"/>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <NavigationView
             x:Name="NavView"
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="False"
             PaneDisplayMode="Left"
-            SelectionChanged="NavView_SelectionChanged">
+            SelectionChanged="NavView_SelectionChanged"
+            ItemInvoked="NavView_ItemInvoked">
 
             <NavigationView.MenuItems>
-                <NavigationViewItem Content="Clocks" Tag="clocks">
+                <NavigationViewItem Content="Clocks" Tag="clocks" IsSelected="True">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Clock" />
                     </NavigationViewItem.Icon>
@@ -35,9 +60,36 @@
                 </NavigationViewItem>
             </NavigationView.MenuItems>
 
-            <ScrollViewer>
-                <Frame x:Name="ContentFrame" />
-            </ScrollViewer>
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem Content="Compact Mode" Tag="compact" SelectsOnInvoked="False">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="BackToWindow" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+
+            <Frame x:Name="ContentFrame">
+                <Frame.ContentTransitions>
+                    <TransitionCollection>
+                        <NavigationThemeTransition/>
+                    </TransitionCollection>
+                </Frame.ContentTransitions>
+            </Frame>
         </NavigationView>
+        </Grid>
+
+        <!-- Compact mode: floating, chromeless clocks (spans entire window) -->
+        <Grid x:Name="CompactView" Grid.Row="0" Grid.RowSpan="2"
+              Visibility="Collapsed" Background="Transparent"
+              IsTabStop="True"
+              DoubleTapped="CompactView_DoubleTapped"
+              KeyDown="CompactView_KeyDown">
+            <Grid.KeyboardAccelerators>
+                <KeyboardAccelerator Key="Escape" Invoked="EscapeAccelerator_Invoked"/>
+            </Grid.KeyboardAccelerators>
+
+            <Grid x:Name="CompactClockList" Padding="8" ColumnSpacing="8"/>
+        </Grid>
+
     </Grid>
 </Window>

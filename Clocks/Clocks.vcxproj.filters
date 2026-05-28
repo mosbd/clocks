@@ -8,6 +8,7 @@
     <Page Include="ClocksPage.xaml" />
     <Page Include="TimeDiffPage.xaml" />
     <Page Include="MeetingPlannerPage.xaml" />
+    <Page Include="ClockCard.xaml" />
   </ItemGroup>
   <ItemGroup>
     <Midl Include="MainWindow.idl" />
@@ -73,5 +74,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
+    <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natstepfilter" />
   </ItemGroup>
 </Project>

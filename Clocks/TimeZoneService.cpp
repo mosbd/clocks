@@ -44,6 +44,157 @@ namespace winrt::Clocks::Services
                 [](const CityInfo& a, const CityInfo& b) {
                     return a.CityName < b.CityName;
                 });
+
+            // Add common-name aliases for major cities that share an IANA zone.
+            struct Alias { const wchar_t* tz; const wchar_t* city; const wchar_t* country; const wchar_t* region; };
+            static const Alias aliases[] = {
+                { L"America/Los_Angeles", L"Seattle",       L"United States", L"America" },
+                { L"America/Los_Angeles", L"San Francisco", L"United States", L"America" },
+                { L"America/Los_Angeles", L"San Diego",     L"United States", L"America" },
+                { L"America/Los_Angeles", L"Portland",      L"United States", L"America" },
+                { L"America/Denver",      L"Salt Lake City",L"United States", L"America" },
+                { L"America/Phoenix",     L"Phoenix",       L"United States", L"America" },
+                { L"America/Chicago",     L"Houston",       L"United States", L"America" },
+                { L"America/Chicago",     L"Dallas",        L"United States", L"America" },
+                { L"America/Chicago",     L"Austin",        L"United States", L"America" },
+                { L"America/Chicago",     L"Minneapolis",   L"United States", L"America" },
+                { L"America/New_York",    L"Boston",        L"United States", L"America" },
+                { L"America/New_York",    L"Washington DC", L"United States", L"America" },
+                { L"America/New_York",    L"Miami",         L"United States", L"America" },
+                { L"America/New_York",    L"Atlanta",       L"United States", L"America" },
+                { L"America/New_York",    L"Philadelphia",  L"United States", L"America" },
+                { L"America/Toronto",     L"Ottawa",        L"Canada",        L"America" },
+                { L"America/Vancouver",   L"Victoria",      L"Canada",        L"America" },
+                // China (all use Asia/Shanghai / CST UTC+8)
+                { L"Asia/Shanghai",       L"Beijing",       L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Guangzhou",     L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Shenzhen",      L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Chengdu",       L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Chongqing",     L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Hangzhou",      L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Nanjing",       L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Tianjin",       L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Wuhan",         L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Xi'an",         L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Suzhou",        L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Qingdao",       L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Dalian",        L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Shenyang",      L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Harbin",        L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Changsha",      L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Zhengzhou",     L"China",         L"Asia" },
+                { L"Asia/Shanghai",       L"Kunming",       L"China",         L"Asia" },
+                { L"Asia/Urumqi",         L"Urumqi",        L"China",         L"Asia" },
+                { L"Asia/Hong_Kong",      L"Hong Kong",     L"China",         L"Asia" },
+                { L"Asia/Macau",          L"Macau",         L"China",         L"Asia" },
+                { L"Asia/Taipei",         L"Taipei",        L"Taiwan",        L"Asia" },
+            };
+            for (const auto& a : aliases)
+            {
+                m_cities.push_back({ winrt::hstring(a.tz), winrt::hstring(a.city),
+                                     winrt::hstring(a.country), winrt::hstring(a.region) });
+            }
+
+            // Single-timezone countries: allow searching/adding by country name.
+            // Each entry adds a record whose "city" is the country, so the user
+            // can pick the country itself when it has only one IANA zone.
+            struct CountryTz { const wchar_t* tz; const wchar_t* country; const wchar_t* region; };
+            static const CountryTz countryZones[] = {
+                { L"Europe/London",       L"United Kingdom", L"Europe" },
+                { L"Europe/Dublin",       L"Ireland",        L"Europe" },
+                { L"Europe/Paris",        L"France",         L"Europe" },
+                { L"Europe/Berlin",       L"Germany",        L"Europe" },
+                { L"Europe/Rome",         L"Italy",          L"Europe" },
+                { L"Europe/Madrid",       L"Spain",          L"Europe" },
+                { L"Europe/Lisbon",       L"Portugal",       L"Europe" },
+                { L"Europe/Amsterdam",    L"Netherlands",    L"Europe" },
+                { L"Europe/Brussels",     L"Belgium",        L"Europe" },
+                { L"Europe/Vienna",       L"Austria",        L"Europe" },
+                { L"Europe/Zurich",       L"Switzerland",    L"Europe" },
+                { L"Europe/Stockholm",    L"Sweden",         L"Europe" },
+                { L"Europe/Oslo",         L"Norway",         L"Europe" },
+                { L"Europe/Copenhagen",   L"Denmark",        L"Europe" },
+                { L"Europe/Helsinki",     L"Finland",        L"Europe" },
+                { L"Europe/Warsaw",       L"Poland",         L"Europe" },
+                { L"Europe/Prague",       L"Czech Republic", L"Europe" },
+                { L"Europe/Budapest",     L"Hungary",        L"Europe" },
+                { L"Europe/Bucharest",    L"Romania",        L"Europe" },
+                { L"Europe/Athens",       L"Greece",         L"Europe" },
+                { L"Europe/Sofia",        L"Bulgaria",       L"Europe" },
+                { L"Asia/Tokyo",          L"Japan",          L"Asia" },
+                { L"Asia/Seoul",          L"South Korea",    L"Asia" },
+                { L"Asia/Shanghai",       L"China",          L"Asia" },
+                { L"Asia/Hong_Kong",      L"Hong Kong",      L"Asia" },
+                { L"Asia/Singapore",      L"Singapore",      L"Asia" },
+                { L"Asia/Bangkok",        L"Thailand",       L"Asia" },
+                { L"Asia/Ho_Chi_Minh",    L"Vietnam",        L"Asia" },
+                { L"Asia/Manila",         L"Philippines",    L"Asia" },
+                { L"Asia/Kolkata",        L"India",          L"Asia" },
+                { L"Asia/Karachi",        L"Pakistan",       L"Asia" },
+                { L"Asia/Dhaka",          L"Bangladesh",     L"Asia" },
+                { L"Asia/Colombo",        L"Sri Lanka",      L"Asia" },
+                { L"Asia/Kathmandu",      L"Nepal",          L"Asia" },
+                { L"Asia/Dubai",          L"United Arab Emirates", L"Asia" },
+                { L"Asia/Riyadh",         L"Saudi Arabia",   L"Asia" },
+                { L"Asia/Qatar",          L"Qatar",          L"Asia" },
+                { L"Asia/Kuwait",         L"Kuwait",         L"Asia" },
+                { L"Asia/Bahrain",        L"Bahrain",        L"Asia" },
+                { L"Asia/Tehran",         L"Iran",           L"Asia" },
+                { L"Asia/Baghdad",        L"Iraq",           L"Asia" },
+                { L"Asia/Jerusalem",      L"Israel",         L"Asia" },
+                { L"Africa/Cairo",        L"Egypt",          L"Africa" },
+                { L"Africa/Lagos",        L"Nigeria",        L"Africa" },
+                { L"Africa/Nairobi",      L"Kenya",          L"Africa" },
+                { L"Africa/Johannesburg", L"South Africa",   L"Africa" },
+                { L"Africa/Casablanca",   L"Morocco",        L"Africa" },
+                { L"Africa/Algiers",      L"Algeria",        L"Africa" },
+                { L"Africa/Tunis",        L"Tunisia",        L"Africa" },
+                { L"Africa/Accra",        L"Ghana",          L"Africa" },
+                { L"Africa/Addis_Ababa",  L"Ethiopia",       L"Africa" },
+                { L"Pacific/Auckland",    L"New Zealand",    L"Pacific" },
+                { L"Pacific/Fiji",        L"Fiji",           L"Pacific" },
+                { L"America/Mexico_City", L"Mexico",         L"Americas" },
+                { L"America/Argentina/Buenos_Aires", L"Argentina", L"Americas" },
+                { L"America/Bogota",      L"Colombia",       L"Americas" },
+                { L"America/Lima",        L"Peru",           L"Americas" },
+                { L"America/Caracas",     L"Venezuela",      L"Americas" },
+                { L"America/Santiago",    L"Chile",          L"Americas" },
+                { L"America/Havana",      L"Cuba",           L"Americas" },
+                { L"America/Jamaica",     L"Jamaica",        L"Americas" },
+            };
+            for (const auto& c : countryZones)
+            {
+                m_cities.push_back({ winrt::hstring(c.tz), winrt::hstring(c.country),
+                                     winrt::hstring(c.country), winrt::hstring(c.region) });
+            }
+
+            // US/Canada time-zone friendly names — allow searching by zone name
+            // (e.g. "Pacific Time", "PT", "PST") instead of a city.
+            // Multiple entries per zone so abbreviations (PST/PDT/EST/EDT/...) all match search.
+            struct ZoneAlias { const wchar_t* tz; const wchar_t* name; const wchar_t* country; const wchar_t* region; };
+            static const ZoneAlias zoneAliases[] = {
+                { L"America/Los_Angeles", L"Pacific Time (PT / PST / PDT)",     L"United States", L"Americas" },
+                { L"America/Denver",      L"Mountain Time (MT / MST / MDT)",    L"United States", L"Americas" },
+                { L"America/Phoenix",     L"Arizona Time (MST, no DST)",        L"United States", L"Americas" },
+                { L"America/Chicago",     L"Central Time (CT / CST / CDT)",     L"United States", L"Americas" },
+                { L"America/New_York",    L"Eastern Time (ET / EST / EDT)",     L"United States", L"Americas" },
+                { L"America/Anchorage",   L"Alaska Time (AKT / AKST / AKDT)",   L"United States", L"Americas" },
+                { L"Pacific/Honolulu",    L"Hawaii Time (HST)",                  L"United States", L"Pacific" },
+                { L"America/Vancouver",   L"Pacific Time - Canada (PT / PST / PDT)",  L"Canada", L"Americas" },
+                { L"America/Edmonton",    L"Mountain Time - Canada (MT / MST / MDT)", L"Canada", L"Americas" },
+                { L"America/Winnipeg",    L"Central Time - Canada (CT / CST / CDT)",  L"Canada", L"Americas" },
+                { L"America/Toronto",     L"Eastern Time - Canada (ET / EST / EDT)",  L"Canada", L"Americas" },
+                { L"America/Halifax",     L"Atlantic Time (AT / AST / ADT)",     L"Canada",        L"Americas" },
+                { L"America/St_Johns",    L"Newfoundland Time (NT / NST / NDT)", L"Canada",        L"Americas" },
+            };
+            for (const auto& z : zoneAliases)
+            {
+                m_cities.push_back({ winrt::hstring(z.tz), winrt::hstring(z.name),
+                                     winrt::hstring(z.country), winrt::hstring(z.region) });
+            }
+
+            std::sort(m_cities.begin(), m_cities.end(),
+                [](const CityInfo& a, const CityInfo& b) { return a.CityName < b.CityName; });
         }
         catch (...)
         {
@@ -99,7 +250,10 @@ namespace winrt::Clocks::Services
         TimeInfo info{};
         try
         {
-            std::string tzId(timezoneId.begin(), timezoneId.end());
+            std::string tzId;
+            tzId.reserve(timezoneId.size());
+            for (wchar_t wc : timezoneId)
+                tzId.push_back(static_cast<char>(wc));
             const auto* tz = std::chrono::locate_zone(tzId);
             auto now = std::chrono::system_clock::now();
             auto zoned = std::chrono::zoned_time{ tz, now };
@@ -153,6 +307,26 @@ namespace winrt::Clocks::Services
         return info;
     }
 
+    int TimeZoneService::GetOffsetMinutesAt(std::wstring_view timezoneId,
+                                            std::chrono::system_clock::time_point instant) const
+    {
+        try
+        {
+            std::string tzId;
+            tzId.reserve(timezoneId.size());
+            for (wchar_t wc : timezoneId)
+                tzId.push_back(static_cast<char>(wc));
+            const auto* tz = std::chrono::locate_zone(tzId);
+            auto info = tz->get_info(instant);
+            auto offsetSec = std::chrono::duration_cast<std::chrono::seconds>(info.offset);
+            return static_cast<int>(offsetSec.count() / 60);
+        }
+        catch (...)
+        {
+            return 0;
+        }
+    }
+
     winrt::hstring TimeZoneService::GetLocalTimezoneId() const
     {
         try
@@ -172,8 +346,14 @@ namespace winrt::Clocks::Services
         try
         {
             auto now = std::chrono::system_clock::now();
-            std::string tzId1(tz1.begin(), tz1.end());
-            std::string tzId2(tz2.begin(), tz2.end());
+            auto toNarrow = [](std::wstring_view w) {
+                std::string s;
+                s.reserve(w.size());
+                for (wchar_t wc : w) s.push_back(static_cast<char>(wc));
+                return s;
+            };
+            std::string tzId1 = toNarrow(tz1);
+            std::string tzId2 = toNarrow(tz2);
             const auto* zone1 = std::chrono::locate_zone(tzId1);
             const auto* zone2 = std::chrono::locate_zone(tzId2);
             auto offset1 = zone1->get_info(now).offset;

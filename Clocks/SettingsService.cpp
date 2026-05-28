@@ -19,22 +19,10 @@ namespace winrt::Clocks::Services
     std::vector<Models::ClockModel> SettingsService::LoadClocks() const
     {
         std::vector<Models::ClockModel> clocks;
+        std::lock_guard guard(m_mutex);
         try
         {
-            std::wstring path(GetSettingsFilePath());
-            std::wifstream file(path);
-            if (!file.is_open()) return clocks;
-
-            std::wstringstream buffer;
-            buffer << file.rdbuf();
-            std::wstring content = buffer.str();
-            file.close();
-
-            if (content.empty()) return clocks;
-
-            JsonObject root;
-            if (!JsonObject::TryParse(winrt::hstring(content), root)) return clocks;
-
+            auto root = ReadRoot();
             if (root.HasKey(L"clocks"))
             {
                 auto arr = root.GetNamedArray(L"clocks");
@@ -47,16 +35,19 @@ namespace winrt::Clocks::Services
         }
         catch (...)
         {
-            // Return empty on any error
+            // Return what we have on any parse error.
         }
         return clocks;
     }
 
     void SettingsService::SaveClocks(const std::vector<Models::ClockModel>& clocks) const
     {
+        std::lock_guard guard(m_mutex);
         try
         {
-            JsonObject root;
+            // Preserve every other field (e.g. compactRect) — never overwrite the
+            // file with just our slice.
+            auto root = ReadRoot();
             JsonArray arr;
             for (const auto& clock : clocks)
             {
@@ -64,14 +55,7 @@ namespace winrt::Clocks::Services
             }
             root.SetNamedValue(L"clocks", arr);
             root.SetNamedValue(L"firstLaunchComplete", JsonValue::CreateBooleanValue(true));
-
-            std::wstring path(GetSettingsFilePath());
-            std::wofstream file(path);
-            if (file.is_open())
-            {
-                file << std::wstring_view(root.Stringify());
-                file.close();
-            }
+            WriteRoot(root);
         }
         catch (...)
         {
@@ -79,36 +63,83 @@ namespace winrt::Clocks::Services
         }
     }
 
-    bool SettingsService::IsFirstLaunch() const
+    SettingsService::CompactRect SettingsService::LoadCompactRect() const
     {
+        CompactRect rect{ 0, 0, 0, 0, false };
+        std::lock_guard guard(m_mutex);
+        try
+        {
+            auto root = ReadRoot();
+            if (root.HasKey(L"compactRect"))
+            {
+                auto obj = root.GetNamedObject(L"compactRect");
+                rect.x      = static_cast<int>(obj.GetNamedNumber(L"x", 0));
+                rect.y      = static_cast<int>(obj.GetNamedNumber(L"y", 0));
+                rect.width  = static_cast<int>(obj.GetNamedNumber(L"width", 0));
+                rect.height = static_cast<int>(obj.GetNamedNumber(L"height", 0));
+                rect.valid  = rect.width > 0 && rect.height > 0;
+            }
+        }
+        catch (...) {}
+        return rect;
+    }
+
+    void SettingsService::SaveCompactRect(int x, int y, int width, int height) const
+    {
+        std::lock_guard guard(m_mutex);
+        try
+        {
+            auto root = ReadRoot();
+            JsonObject obj;
+            obj.SetNamedValue(L"x",      JsonValue::CreateNumberValue(x));
+            obj.SetNamedValue(L"y",      JsonValue::CreateNumberValue(y));
+            obj.SetNamedValue(L"width",  JsonValue::CreateNumberValue(width));
+            obj.SetNamedValue(L"height", JsonValue::CreateNumberValue(height));
+            root.SetNamedValue(L"compactRect", obj);
+            WriteRoot(root);
+        }
+        catch (...) {}
+    }
+
+    JsonObject SettingsService::ReadRoot() const
+    {
+        JsonObject root;
         try
         {
             std::wstring path(GetSettingsFilePath());
             std::wifstream file(path);
-            if (!file.is_open()) return true;
+            if (!file.is_open()) return root;
 
             std::wstringstream buffer;
             buffer << file.rdbuf();
             std::wstring content = buffer.str();
-            file.close();
+            if (content.empty()) return root;
 
-            JsonObject root;
-            if (!JsonObject::TryParse(winrt::hstring(content), root)) return true;
-
-            if (root.HasKey(L"firstLaunchComplete"))
-            {
-                return !root.GetNamedBoolean(L"firstLaunchComplete");
-            }
+            JsonObject parsed;
+            if (JsonObject::TryParse(winrt::hstring(content), parsed))
+                return parsed;
         }
-        catch (...)
-        {
-        }
-        return true;
+        catch (...) {}
+        return root;
     }
 
-    void SettingsService::SetFirstLaunchComplete() const
+    void SettingsService::WriteRoot(JsonObject const& root) const
     {
-        // Will be set when clocks are saved for the first time
+        try
+        {
+            std::wstring path(GetSettingsFilePath());
+            std::wstring tmp = path + L".tmp";
+            {
+                std::wofstream out(tmp);
+                if (!out.is_open()) return;
+                out << std::wstring_view(root.Stringify());
+                if (!out.good()) return;
+            }
+            // Atomic replace: avoids leaving a half-written settings file on crash.
+            ::MoveFileExW(tmp.c_str(), path.c_str(),
+                          MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
+        }
+        catch (...) {}
     }
 
     JsonObject SettingsService::ClockToJson(const Models::ClockModel& clock) const

@@ -34,6 +34,13 @@ namespace winrt::Clocks::Services
         std::vector<CityInfo> const& GetAllCities() const;
         std::vector<CityInfo> SearchCities(std::wstring_view query) const;
         TimeInfo GetCurrentTime(std::wstring_view timezoneId) const;
+        // Returns the UTC offset (in minutes) that `timezoneId` has at the given
+        // UTC instant. Use this instead of `TimeInfo::totalOffsetMinutes` when
+        // mapping a 24-hour window: a single day can straddle a DST transition,
+        // and using "now's" offset for every hour produces a one-hour error
+        // across the transition.
+        int GetOffsetMinutesAt(std::wstring_view timezoneId,
+                               std::chrono::system_clock::time_point instant) const;
         winrt::hstring GetLocalTimezoneId() const;
         int GetTimeDifferenceMinutes(std::wstring_view tz1, std::wstring_view tz2) const;
 
