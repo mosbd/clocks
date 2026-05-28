@@ -21,7 +21,7 @@ Built with **WinUI 3** and **C++/WinRT** on the Windows App SDK.
 
 ## Screenshots
 
-_Coming soon._
+![Clocks main window showing Seattle, Xi'an, New York, and India clocks side by side](docs/screenshots/clocks-grid.png)
 
 ## Requirements
 
