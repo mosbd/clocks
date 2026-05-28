@@ -33,15 +33,22 @@ ASSETS = Path(__file__).resolve().parent
 # ---------------------------------------------------------------------------
 # Palette
 # ---------------------------------------------------------------------------
-# Fluent-style blue tile with a hint of indigo at the bottom. Solid enough to
-# look like a system app, distinctive enough to not collide with the built-in
-# Windows Clock (which is amber).
-TILE_TOP = (46, 116, 230)
-TILE_BOTTOM = (74, 66, 198)
+# A "dusk" gradient — warm coral at the top, deep violet at the bottom.
+# Reasons for this choice over the prior Fluent blue:
+#   * Win11's own accent is blue, so a blue tile blends into the taskbar
+#     and competes with first-party Microsoft icons. A sunset palette is
+#     instantly recognizable.
+#   * Thematically echoes the Clocks app's day/night card tinting, where
+#     each card paints a smooth gradient that follows its local hour.
+#   * Holds a pure-white glyph at high contrast at every size.
+#   * Doesn't collide with first-party Win11 apps: system Clock is amber,
+#     Calendar is navy, Edge is teal — a coral→violet dusk is its own thing.
+TILE_TOP = (255, 122, 89)       # warm coral / sunset orange
+TILE_BOTTOM = (91, 79, 233)     # vivid Fluent violet
 
 GLYPH_LIGHT = (255, 255, 255)   # for the plated tile and dark unplated surfaces
-GLYPH_DARK = (32, 38, 56)       # for the lightunplated surface
-ACCENT = (255, 196, 60)         # warm amber, only used on larger sizes
+GLYPH_DARK = (32, 32, 48)       # for the lightunplated surface
+ACCENT = (255, 214, 110)        # warm amber, only used on larger sizes
 
 
 # ---------------------------------------------------------------------------
