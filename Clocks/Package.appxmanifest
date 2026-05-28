@@ -9,15 +9,15 @@
   IgnorableNamespaces="uap rescap systemai">
 
   <Identity
-    Name="cd8328a5-63a7-4664-a090-04901822f0ae"
-    Publisher="CN=v-willyang"
+    Name="mosbd.WorldClockforWindows"
+    Publisher="CN=23844A0C-A7B8-46D6-ADB2-A610C8E811FC"
     Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="cd8328a5-63a7-4664-a090-04901822f0ae" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Clocks</DisplayName>
-    <PublisherDisplayName>v-willyang</PublisherDisplayName>
+    <DisplayName>World Clock for Windows</DisplayName>
+    <PublisherDisplayName>mosbd</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
