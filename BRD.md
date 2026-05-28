@@ -4,10 +4,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Document Version** | 1.0 |
+| **Document Version** | 1.1 |
 | **Product Name** | Clocks |
 | **Platform** | Windows Desktop (WinUI 3) |
-| **Status** | In Development |
+| **Status** | Released |
 
 ---
 
@@ -304,10 +304,10 @@ Clocks is a Windows desktop application that displays multiple world clocks simu
 | Phase | Scope | Status |
 |-------|-------|--------|
 | **Phase 1: Foundation** | Project setup, MVVM scaffolding, TimeZoneService, SettingsService, NavigationView shell | ✅ Complete |
-| **Phase 2: Core Clock UI** | Analog rendering (3 styles), digital rendering (3 styles), ClockCard control, ClocksPage grid with timer | 🔄 In Progress |
-| **Phase 3: City Management** | AddCityDialog with autocomplete, remove clock, first-launch behavior | ⏳ Pending |
-| **Phase 4: Additional Features** | Time difference calculator, meeting planner, compact overlay | ⏳ Pending |
-| **Phase 5: Polish** | Theme adaptation, animations, performance optimization, edge cases | ⏳ Pending |
+| **Phase 2: Core Clock UI** | Analog rendering (3 styles), digital rendering (3 styles), ClockCard control, ClocksPage grid with timer | ✅ Complete |
+| **Phase 3: City Management** | AddCityDialog with autocomplete, remove clock, first-launch behavior, country and US/Canada zone aliases | ✅ Complete |
+| **Phase 4: Additional Features** | Time difference calculator, meeting planner, compact overlay (always-on-top, aspect-locked, persisted size/position, layered transparency on inactivate) | ✅ Complete |
+| **Phase 5: Polish** | Theme adaptation, day/night background gradients per timezone, per-monitor DPI handling, WM_DPICHANGED support, multi-monitor rect validation, app icon assets | ✅ Complete |
 
 ---
 
